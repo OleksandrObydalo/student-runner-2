@@ -5,6 +5,8 @@ const JUMP_FORCE = -20;
 const INITIAL_SPEED = 5;
 const SPEED_INCREMENT = 0.0001;
 const OBSTACLE_SPAWN_RATE = 1500; // milliseconds
+const MAX_JUMPS = 2; // Allow two jumps
+let jumpCount = 0; // Track number of jumps
 
 // Game elements
 let canvas, ctx;
@@ -213,6 +215,7 @@ function startGame() {
     gameRunning = true;
     examSession = false;
     currentSemester = 0;
+    jumpCount = 0;
     
     // Start game loop
     if (spawnTimer) clearInterval(spawnTimer);
@@ -243,6 +246,7 @@ function update() {
             player.y = CANVAS_HEIGHT - GROUND_HEIGHT - player.height;
             player.jumping = false;
             player.velocityY = 0;
+            jumpCount = 0; // Reset jump count when landing
         }
     }
     
@@ -517,8 +521,11 @@ function render() {
 function handleKeyDown(e) {
     if (!gameRunning) return;
     
-    if (e.code === 'Space' && !player.jumping) {
-        jump();
+    if (e.code === 'Space') {
+        // Check if not already at max jumps
+        if (jumpCount < MAX_JUMPS) {
+            jump();
+        }
     } else if (e.code === 'ArrowDown') {
         player.crouching = true;
     }
@@ -562,8 +569,20 @@ function handleTouchEnd(e) {
 }
 
 function jump() {
-    player.jumping = true;
-    player.velocityY = player.jumpForce;
+    // Check if player can jump (either not jumping or has jump count left)
+    if (!player.jumping || (player.jumping && jumpCount < MAX_JUMPS - 1)) {
+        // If this is the first jump, set jumping to true
+        if (!player.jumping) {
+            player.jumping = true;
+            jumpCount = 1;
+        } else {
+            // Increment jump count for second jump
+            jumpCount++;
+        }
+        
+        // Apply jump velocity (slightly less for second jump)
+        player.velocityY = player.jumpForce * (jumpCount === 2 ? 0.8 : 1);
+    }
 }
 
 function checkCollision(a, b) {
