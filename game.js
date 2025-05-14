@@ -17,6 +17,7 @@ let gameRunning, examSession;
 let currentSemester;
 let character = 'stem';
 let touchStartY;
+let images = {}; // Store loaded images
 
 // Character stats
 const CHARACTERS = {
@@ -56,6 +57,9 @@ function init() {
     canvas.height = CANVAS_HEIGHT;
     ctx = canvas.getContext('2d');
     
+    // Load images
+    loadImages();
+    
     // Load saved knowledge and unlocks
     loadGameData();
     updateCharacterSelect();
@@ -73,6 +77,27 @@ function init() {
     
     document.querySelectorAll('.character').forEach(char => {
         char.addEventListener('click', selectCharacter);
+    });
+}
+
+function loadImages() {
+    const imageSources = {
+        'stem': 'character_stem.png',
+        'humanities': 'character_humanities.png',
+        'medical': 'character_medical.png',
+        'labWork': 'obstacle_labwork.png',
+        'test': 'obstacle_test.png',
+        'project': 'obstacle_project.png',
+        'exam': 'obstacle_exam.png',
+        'flyingObstacle': 'obstacle_flying.png',
+        'coffee': 'powerup_coffee.png',
+        'cheatSheet': 'powerup_cheatsheet.png',
+        'notes': 'powerup_notes.png'
+    };
+    
+    Object.entries(imageSources).forEach(([key, src]) => {
+        images[key] = new Image();
+        images[key].src = src;
     });
 }
 
@@ -397,54 +422,54 @@ function render() {
     ctx.fillRect(0, CANVAS_HEIGHT - GROUND_HEIGHT, CANVAS_WIDTH, GROUND_HEIGHT);
     
     // Draw player
-    if (player.invincible && Math.floor(Date.now() / 100) % 2 === 0) {
-        // Blinking effect when invincible
-        ctx.fillStyle = '#FFD700';
+    if (images[character] && images[character].complete) {
+        const playerHeight = player.crouching ? player.height / 2 : player.height;
+        const playerY = player.crouching ? player.y + player.height / 2 : player.y;
+        
+        // Apply blinking effect when invincible
+        if (player.invincible && Math.floor(Date.now() / 100) % 2 === 0) {
+            ctx.globalAlpha = 0.5;
+        }
+        ctx.drawImage(images[character], player.x, playerY, player.width, playerHeight);
+        ctx.globalAlpha = 1.0;
     } else {
-        ctx.fillStyle = '#00F';
+        // Fallback rendering
+        ctx.fillStyle = player.invincible && Math.floor(Date.now() / 100) % 2 === 0 ? '#FFD700' : '#00F';
+        const playerHeight = player.crouching ? player.height / 2 : player.height;
+        const playerY = player.crouching ? player.y + player.height / 2 : player.y;
+        ctx.fillRect(player.x, playerY, player.width, playerHeight);
     }
-    
-    const playerHeight = player.crouching ? player.height / 2 : player.height;
-    const playerY = player.crouching ? player.y + player.height / 2 : player.y;
-    
-    ctx.fillRect(player.x, playerY, player.width, playerHeight);
     
     // Draw obstacles
     for (const obstacle of obstacles) {
-        switch (obstacle.type) {
-            case 'labWork':
-                ctx.fillStyle = '#8B0000';
-                break;
-            case 'test':
-                ctx.fillStyle = '#FF4500';
-                break;
-            case 'project':
-                ctx.fillStyle = '#4B0082';
-                break;
-            case 'exam':
-                ctx.fillStyle = '#000';
-                break;
-            case 'flyingObstacle':
-                ctx.fillStyle = '#800080';
-                break;
+        if (images[obstacle.type] && images[obstacle.type].complete) {
+            ctx.drawImage(images[obstacle.type], obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        } else {
+            // Fallback rendering
+            switch (obstacle.type) {
+                case 'labWork': ctx.fillStyle = '#8B0000'; break;
+                case 'test': ctx.fillStyle = '#FF4500'; break;
+                case 'project': ctx.fillStyle = '#4B0082'; break;
+                case 'exam': ctx.fillStyle = '#000'; break;
+                case 'flyingObstacle': ctx.fillStyle = '#800080'; break;
+            }
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
         }
-        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
     }
     
     // Draw powerups
     for (const powerup of powerups) {
-        switch (powerup.type) {
-            case 'coffee':
-                ctx.fillStyle = '#8B4513';
-                break;
-            case 'cheatSheet':
-                ctx.fillStyle = '#FFD700';
-                break;
-            case 'notes':
-                ctx.fillStyle = '#32CD32';
-                break;
+        if (images[powerup.type] && images[powerup.type].complete) {
+            ctx.drawImage(images[powerup.type], powerup.x, powerup.y, powerup.width, powerup.height);
+        } else {
+            // Fallback rendering
+            switch (powerup.type) {
+                case 'coffee': ctx.fillStyle = '#8B4513'; break;
+                case 'cheatSheet': ctx.fillStyle = '#FFD700'; break;
+                case 'notes': ctx.fillStyle = '#32CD32'; break;
+            }
+            ctx.fillRect(powerup.x, powerup.y, powerup.width, powerup.height);
         }
-        ctx.fillRect(powerup.x, powerup.y, powerup.width, powerup.height);
     }
     
     // Draw exam session indicator
@@ -539,4 +564,3 @@ function weightedRandom(items, weights) {
 
 // Initialize game when page loads
 window.addEventListener('load', init);
-

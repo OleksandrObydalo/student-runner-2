@@ -117,6 +117,18 @@ button {
     margin-bottom: 10px;
 }
 
+.char-preview.stem {
+    background-image: url('character_stem.png');
+}
+
+.char-preview.humanities {
+    background-image: url('character_humanities.png');
+}
+
+.char-preview.medical {
+    background-image: url('character_medical.png');
+}
+
 .ability {
     font-style: italic;
     font-size: 12px;
@@ -128,4 +140,3 @@ button {
     font-size: 12px;
     margin-top: 5px;
 }
-
