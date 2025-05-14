@@ -1,9 +1,7 @@
 // Game constants
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 400;
-const GROUND_HEIGHT = 30;
-const GRAVITY = 1;
-const JUMP_FORCE = -15;
+let CANVAS_WIDTH, CANVAS_HEIGHT, GROUND_HEIGHT;
+const GRAVITY = 0.8;
+const JUMP_FORCE = -20;
 const INITIAL_SPEED = 5;
 const SPEED_INCREMENT = 0.0001;
 const OBSTACLE_SPAWN_RATE = 1500; // milliseconds
@@ -21,18 +19,18 @@ let images = {}; // Store loaded images
 
 // Character stats
 const CHARACTERS = {
-    stem: { jumpForce: -18, speed: 1, invincibilityTime: 1 },
-    humanities: { jumpForce: -15, speed: 1.2, invincibilityTime: 1 },
-    medical: { jumpForce: -15, speed: 1, invincibilityTime: 1.5 }
+    stem: { jumpForce: -22, speed: 1, invincibilityTime: 1 },
+    humanities: { jumpForce: -20, speed: 1.2, invincibilityTime: 1 },
+    medical: { jumpForce: -20, speed: 1, invincibilityTime: 1.5 }
 };
 
 // Obstacle types
 const OBSTACLES = [
-    { type: 'labWork', width: 30, height: 40, points: 10, rarity: 0.4 },
-    { type: 'test', width: 40, height: 60, points: 20, rarity: 0.3 },
-    { type: 'project', width: 35, height: 80, points: 30, rarity: 0.2 },
-    { type: 'exam', width: 50, height: 70, points: 50, rarity: 0.1 },
-    { type: 'flyingObstacle', width: 40, height: 30, points: 15, rarity: 0.2, flying: true }
+    { type: 'labWork', width: 0.05, height: 0.125, points: 10, rarity: 0.4 },
+    { type: 'test', width: 0.05, height: 0.125, points: 20, rarity: 0.3 },
+    { type: 'project', width: 0.05, height: 0.125, points: 30, rarity: 0.2 },
+    { type: 'exam', width: 0.05, height: 0.125, points: 50, rarity: 0.1 },
+    { type: 'flyingObstacle', width: 0.05, height: 0.125, points: 15, rarity: 0.2, flying: true }
 ];
 
 // Powerup types
@@ -53,8 +51,35 @@ const BACKGROUNDS = [
 // Initialize the game
 function init() {
     canvas = document.getElementById('gameCanvas');
-    canvas.width = CANVAS_WIDTH;
-    canvas.height = CANVAS_HEIGHT;
+    
+    // Make canvas responsive
+    function resizeCanvas() {
+        const container = document.querySelector('.game-container');
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight - 
+            document.querySelector('.game-header').offsetHeight - 
+            document.querySelector('.controls-info').offsetHeight;
+        
+        // Recalculate game constants based on new canvas size
+        CANVAS_WIDTH = canvas.width;
+        CANVAS_HEIGHT = canvas.height;
+        GROUND_HEIGHT = Math.max(30, canvas.height * 0.075);
+        
+        // Adjust player and obstacle sizes proportionally
+        if (player) {
+            player.width = canvas.width * 0.05;
+            player.height = canvas.height * 0.125;
+            player.x = canvas.width * 0.0625;
+            player.y = CANVAS_HEIGHT - GROUND_HEIGHT - player.height;
+        }
+    }
+    
+    // Initial resize
+    resizeCanvas();
+    
+    // Resize on window resize
+    window.addEventListener('resize', resizeCanvas);
+    
     ctx = canvas.getContext('2d');
     
     // Load images
@@ -170,10 +195,10 @@ function startGame() {
     
     // Reset game state
     player = {
-        x: 50,
-        y: CANVAS_HEIGHT - GROUND_HEIGHT - 50,
-        width: 30,
-        height: 50,
+        x: CANVAS_WIDTH * 0.0625,
+        y: CANVAS_HEIGHT - GROUND_HEIGHT - canvas.height * 0.125,
+        width: CANVAS_WIDTH * 0.05,
+        height: CANVAS_HEIGHT * 0.125,
         jumping: false,
         crouching: false,
         velocityY: 0,
@@ -244,7 +269,7 @@ function update() {
         obstacle.x -= speed;
         
         // Remove off-screen obstacles
-        if (obstacle.x + obstacle.width < 0) {
+        if (obstacle.x + obstacle.width * CANVAS_WIDTH < 0) {
             obstacles.splice(i, 1);
         } else if (!player.invincible && checkCollision(player, obstacle)) {
             gameOver();
@@ -258,7 +283,7 @@ function update() {
         powerup.x -= speed;
         
         // Remove off-screen powerups
-        if (powerup.x + powerup.width < 0) {
+        if (powerup.x + powerup.width * CANVAS_WIDTH < 0) {
             powerups.splice(i, 1);
         } else if (checkCollision(player, powerup)) {
             activatePowerup(powerup);
@@ -295,8 +320,8 @@ function spawnObstacle() {
         const obstacle = {
             x: CANVAS_WIDTH,
             y: obstacleType.flying ? 
-                CANVAS_HEIGHT - GROUND_HEIGHT - 80 - Math.random() * 60 : 
-                CANVAS_HEIGHT - GROUND_HEIGHT - obstacleType.height,
+                CANVAS_HEIGHT - GROUND_HEIGHT - canvas.height * 0.25 - Math.random() * (canvas.height * 0.125) : 
+                CANVAS_HEIGHT - GROUND_HEIGHT - obstacleType.height * CANVAS_HEIGHT,
             width: obstacleType.width,
             height: obstacleType.height,
             type: obstacleType.type,
@@ -312,9 +337,9 @@ function spawnObstacle() {
         
         const powerup = {
             x: CANVAS_WIDTH,
-            y: CANVAS_HEIGHT - GROUND_HEIGHT - 40 - Math.random() * 60,
-            width: 30,
-            height: 30,
+            y: CANVAS_HEIGHT - GROUND_HEIGHT - canvas.height * 0.125 - Math.random() * (canvas.height * 0.125),
+            width: 0.05,
+            height: 0.05,
             type: powerupType.type,
             effect: powerupType.effect,
             duration: powerupType.duration,
@@ -406,15 +431,24 @@ function useCheatSheet() {
 }
 
 function render() {
+    // Existing rendering logic, with sizes proportional to canvas
+    const buildingWidth = CANVAS_WIDTH * 0.25;
+    const buildingBaseHeight = CANVAS_HEIGHT * 0.25;
+    
     // Draw background (sky)
     ctx.fillStyle = BACKGROUNDS[currentSemester].sky;
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     
-    // Draw buildings
+    // Draw buildings with proportional sizing
     ctx.fillStyle = BACKGROUNDS[currentSemester].buildings;
     for (let i = 0; i < 5; i++) {
-        const buildingHeight = 100 + Math.sin(i * 1.5) * 50;
-        ctx.fillRect(i * 200 - (score * 0.2) % 200, CANVAS_HEIGHT - GROUND_HEIGHT - buildingHeight, 180, buildingHeight);
+        const buildingHeight = buildingBaseHeight + Math.sin(i * 1.5) * (buildingBaseHeight * 0.5);
+        ctx.fillRect(
+            i * buildingWidth - (score * 0.2) % buildingWidth, 
+            CANVAS_HEIGHT - GROUND_HEIGHT - buildingHeight, 
+            buildingWidth * 0.9, 
+            buildingHeight
+        );
     }
     
     // Draw ground
@@ -443,7 +477,7 @@ function render() {
     // Draw obstacles
     for (const obstacle of obstacles) {
         if (images[obstacle.type] && images[obstacle.type].complete) {
-            ctx.drawImage(images[obstacle.type], obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            ctx.drawImage(images[obstacle.type], obstacle.x, obstacle.y, obstacle.width * CANVAS_WIDTH, obstacle.height * CANVAS_HEIGHT);
         } else {
             // Fallback rendering
             switch (obstacle.type) {
@@ -453,14 +487,14 @@ function render() {
                 case 'exam': ctx.fillStyle = '#000'; break;
                 case 'flyingObstacle': ctx.fillStyle = '#800080'; break;
             }
-            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width * CANVAS_WIDTH, obstacle.height * CANVAS_HEIGHT);
         }
     }
     
     // Draw powerups
     for (const powerup of powerups) {
         if (images[powerup.type] && images[powerup.type].complete) {
-            ctx.drawImage(images[powerup.type], powerup.x, powerup.y, powerup.width, powerup.height);
+            ctx.drawImage(images[powerup.type], powerup.x, powerup.y, powerup.width * CANVAS_WIDTH, powerup.height * CANVAS_HEIGHT);
         } else {
             // Fallback rendering
             switch (powerup.type) {
@@ -468,7 +502,7 @@ function render() {
                 case 'cheatSheet': ctx.fillStyle = '#FFD700'; break;
                 case 'notes': ctx.fillStyle = '#32CD32'; break;
             }
-            ctx.fillRect(powerup.x, powerup.y, powerup.width, powerup.height);
+            ctx.fillRect(powerup.x, powerup.y, powerup.width * CANVAS_WIDTH, powerup.height * CANVAS_HEIGHT);
         }
     }
     
@@ -541,9 +575,9 @@ function checkCollision(a, b) {
     const aY = a.crouching ? a.y + a.height / 2 : a.y;
     
     return (
-        a.x < b.x + b.width &&
+        a.x < b.x + b.width * CANVAS_WIDTH &&
         a.x + a.width > b.x &&
-        aY < b.y + b.height &&
+        aY < b.y + b.height * CANVAS_HEIGHT &&
         aY + aHeight > b.y
     );
 }
