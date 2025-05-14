@@ -1,0 +1,58 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Runner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="stats">
+            <div class="score">Score: <span id="score">0</span></div>
+            <div class="knowledge">Knowledge: <span id="knowledge">0</span></div>
+            <div class="semester">Semester: <span id="semester">1</span></div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div class="controls-info">
+            <p>Press SPACE to jump, DOWN ARROW to crouch</p>
+            <p>Or tap screen to jump, swipe down to crouch (mobile)</p>
+        </div>
+        <div id="gameOver" class="hidden">
+            <h2>Game Over!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <p>Knowledge Earned: <span id="earnedKnowledge">0</span></p>
+            <button id="restartBtn">Play Again</button>
+            <button id="useCheatSheet" class="hidden">Use Cheat Sheet (50 Knowledge)</button>
+        </div>
+        <div id="startScreen">
+            <h1>Student Runner</h1>
+            <p>Run through university life, dodge exams and collect knowledge!</p>
+            <button id="startBtn">Start Game</button>
+            <div class="character-select">
+                <h3>Select Character:</h3>
+                <div class="characters">
+                    <div class="character selected" data-type="stem">
+                        <div class="char-preview stem"></div>
+                        <p>STEM Student</p>
+                        <p class="ability">Better at jumping</p>
+                        <p class="locked hidden">Unlock: 100 Knowledge</p>
+                    </div>
+                    <div class="character locked" data-type="humanities">
+                        <div class="char-preview humanities"></div>
+                        <p>Humanities</p>
+                        <p class="ability">Faster movement</p>
+                        <p class="locked">Unlock: 100 Knowledge</p>
+                    </div>
+                    <div class="character locked" data-type="medical">
+                        <div class="char-preview medical"></div>
+                        <p>Medical</p>
+                        <p class="ability">Longer invincibility</p>
+                        <p class="locked">Unlock: 200 Knowledge</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
